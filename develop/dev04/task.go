@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 /*
 === Поиск анаграмм по словарю ===
 
@@ -20,5 +26,54 @@ package main
 */
 
 func main() {
+	// создать массив со словами на русском языке
+	//wordsArr := []string{"Пятак", "пятка", "листок", "тяпка", "слиток", "столик", "лот", "аткяп"}
+	wordsArr := []string{"чистка", "считка", "частик", "кОлба", "бокал", "балок", "Канистра", "старинка",
+		"одно", "пятка", "тяпка"}
+	mAns := searchAnagram(&wordsArr)
 
+	for k, val := range *mAns {
+		fmt.Printf("%q: %v\n", k, val)
+	}
+}
+
+func searchAnagram(words *[]string) *map[string][]string {
+	anagrams := make(map[string][]string)
+
+	usesWords := map[rune][]string{}
+	usesKeys := map[int32]string{}
+
+	// перевод слайса к нижнему регистру
+	toLowerSlice(words)
+
+	for i := 0; i < len(*words); i++ {
+		countRuneInWord := int32(0)
+		for _, val := range (*words)[i] {
+			countRuneInWord += val
+		}
+		if _, ok := usesKeys[countRuneInWord]; !ok {
+			usesKeys[countRuneInWord] = (*words)[i]
+			usesWords[countRuneInWord] = append(usesWords[countRuneInWord], (*words)[i])
+		} else {
+			usesWords[countRuneInWord] = append(usesWords[countRuneInWord], (*words)[i])
+		}
+	}
+
+	// Сортировка множества слов
+	for _, val := range usesWords {
+		sort.Strings(val)
+	}
+
+	for k, val := range usesKeys {
+		if len(usesWords[k]) > 1 {
+			anagrams[val] = usesWords[k]
+		}
+	}
+	return &anagrams
+}
+
+func toLowerSlice(words *[]string) {
+	for i := 0; i < len(*words); i++ {
+		(*words)[i] = strings.ToLower((*words)[i])
+	}
 }
