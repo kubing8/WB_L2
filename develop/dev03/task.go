@@ -63,7 +63,7 @@ func main() {
 		fileName = "C:\\GoCode\\src\\WB_L2\\develop\\dev03\\startText.txt"
 	}
 
-	// Открытие файла и загрузка его в ОП
+	// Открытие файла и загрузка его в память
 	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Println("Error open file!\n", err)
