@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+	"reflect"
+	"time"
+)
+
 /*
 === Or channel ===
 
@@ -33,6 +39,47 @@ start := time.Now()
 fmt.Printf(“fone after %v”, time.Since(start))
 */
 
-func main() {
+func or(channels ...<-chan interface{}) <-chan interface{} {
+	var s []reflect.SelectCase
+	for _, ch := range channels {
+		// добавляем неизвестное количество каналов в слайс с кейсами
+		s = append(s, reflect.SelectCase{
+			Dir:  reflect.SelectRecv,  // Если Dir — SelectRecv, случай представляет операцию получения: case <-Chan
+			Chan: reflect.ValueOf(ch), // Конкретный канал на чтение
+		})
+	}
 
+	// канал, который возвратим в главную функцию и который закроем, после завершения одного из других канало
+	c := make(chan interface{})
+
+	// Блокируем в отдельной горутине, пока не выполнится один из каналов
+	go func() {
+		reflect.Select(s)
+
+		// После чтения из канала закроется канал, который возобновит работу go-main
+		close(c)
+	}()
+
+	return c
+}
+
+func main() {
+	sig := func(after time.Duration) <-chan interface{} {
+		c := make(chan interface{})
+		go func() {
+			defer close(c)
+			time.Sleep(after)
+		}()
+		return c
+	}
+
+	start := time.Now()
+	<-or(
+		sig(2*time.Second),
+		sig(1*time.Minute),
+		sig(30*time.Second),
+		sig(90*time.Second),
+		sig(2*time.Minute),
+	)
+	fmt.Printf("Done after %v", time.Since(start))
 }
